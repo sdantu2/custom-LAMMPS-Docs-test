@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Custom LAMMPS Fork — Documentation</title>
+<style>
+  /* ── Reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 15px; }
+  body {
+    font-family: 'Lato', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.9375rem;
+    line-height: 1.65;
+    color: #404040;
+    background: #eee;
+  }
+
+  /* ── Layout shell ── */
+  .page-wrap { display: flex; min-height: 100vh; }
+
+  /* ── Sidebar ── */
+  #sidebar {
+    width: 270px;
+    min-width: 270px;
+    background: #343131;
+    color: #d9d9d9;
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    flex-shrink: 0;
+    scrollbar-width: thin;
+    scrollbar-color: #555 #343131;
+  }
+  #sidebar::-webkit-scrollbar { width: 5px; }
+  #sidebar::-webkit-scrollbar-track { background: #343131; }
+  #sidebar::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
+
+  .sidebar-logo {
+    padding: 18px 20px 12px;
+    border-bottom: 1px solid #4a4a4a;
+  }
+  .sidebar-logo .logo-name {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 0.01em;
+    display: block;
+    line-height: 1.2;
+  }
+  .sidebar-logo .logo-sub {
+    font-size: 0.72rem;
+    color: #999;
+    margin-top: 3px;
+    display: block;
+  }
+
+  .sidebar-meta {
+    padding: 8px 20px 10px;
+    border-bottom: 1px solid #4a4a4a;
+    font-size: 0.75rem;
+    color: #aaa;
+  }
+  .sidebar-meta span { color: #ccc; font-weight: 600; }
+
+  .sidebar-search {
+    padding: 10px 14px;
+    border-bottom: 1px solid #4a4a4a;
+  }
+  .sidebar-search input {
+    width: 100%;
+    background: #4a4848;
+    border: 1px solid #5c5c5c;
+    border-radius: 3px;
+    color: #d9d9d9;
+    padding: 5px 10px;
+    font-size: 0.8rem;
+    outline: none;
+  }
+  .sidebar-search input::placeholder { color: #888; }
+  .sidebar-search input:focus { border-color: #2980b9; }
+
+  .nav-section { padding: 0; }
+  .nav-section-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #888;
+    padding: 12px 20px 4px;
+  }
+  .nav-section ul { list-style: none; }
+  .nav-section ul li a {
+    display: block;
+    padding: 4px 20px 4px 20px;
+    color: #c8c8c8;
+    text-decoration: none;
+    font-size: 0.84rem;
+    transition: background 0.12s, color 0.12s;
+    border-left: 3px solid transparent;
+  }
+  .nav-section ul li a:hover { background: #3e3b3b; color: #ffffff; }
+  .nav-section ul li.active > a {
+    color: #e07b39;
+    background: #2b2929;
+    border-left-color: #e07b39;
+    font-weight: 600;
+  }
+  .nav-section ul li ul { /* sub-items */
+    background: #2d2a2a;
+  }
+  .nav-section ul li ul li a {
+    padding-left: 34px;
+    font-size: 0.8rem;
+    color: #aaa;
+    border-left: none;
+  }
+  .nav-section ul li ul li a:hover { color: #fff; background: #3a3737; }
+  .nav-section ul li ul li.active a { color: #e07b39; font-weight: 600; }
+
+  .nav-divider { border-top: 1px solid #4a4a4a; margin: 6px 0; }
+
+  /* ── Main column ── */
+  #main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  /* ── Top bar ── */
+  #topbar {
+    background: #343131;
+    border-bottom: 2px solid #e07b39;
+    padding: 7px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    color: #bbb;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .breadcrumb a { color: #aaa; text-decoration: none; }
+  .breadcrumb a:hover { color: #fff; }
+  .breadcrumb span { color: #777; margin: 0 5px; }
+  .topbar-nav a {
+    color: #aaa;
+    text-decoration: none;
+    margin-left: 16px;
+    font-size: 0.8rem;
+  }
+  .topbar-nav a:hover { color: #fff; }
+  .topbar-nav a.next::after { content: ' »'; }
+  .topbar-nav a.prev::before { content: '« '; }
+
+  /* ── Content area ── */
+  #content {
+    background: #fcfcfc;
+    padding: 40px 52px 60px;
+    max-width: 960px;
+    width: 100%;
+  }
+
+  /* ── Typography ── */
+  #content h1 {
+    font-size: 1.85rem;
+    font-weight: 700;
+    color: #2c2c2c;
+    border-bottom: 2px solid #e07b39;
+    padding-bottom: 10px;
+    margin-bottom: 22px;
+    margin-top: 0;
+    line-height: 1.25;
+  }
+  #content h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #2c2c2c;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 6px;
+    margin: 36px 0 14px;
+  }
+  #content h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #333;
+    margin: 26px 0 10px;
+  }
+  #content h4 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #444;
+    margin: 18px 0 8px;
+  }
+  #content p { margin-bottom: 14px; }
+  #content a { color: #2980b9; text-decoration: none; }
+  #content a:hover { text-decoration: underline; color: #3091d1; }
+
+  /* section anchor links */
+  .headerlink { color: #ddd !important; font-size: 0.85rem; margin-left: 6px; }
+  .headerlink:hover { color: #2980b9 !important; text-decoration: none !important; }
+
+  /* ── Admonitions / callout boxes ── */
+  .admonition {
+    border-radius: 3px;
+    padding: 14px 16px;
+    margin: 18px 0;
+    font-size: 0.9rem;
+    border-left: 5px solid;
+  }
+  .admonition .admonition-title {
+    font-weight: 700;
+    font-size: 0.88rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 5px;
+  }
+  .note    { background: #e8f4fd; border-color: #2980b9; }
+  .note    .admonition-title { color: #2267a0; }
+  .warning { background: #fff3cd; border-color: #e6a817; }
+  .warning .admonition-title { color: #8a6d00; }
+  .important { background: #fce8e8; border-color: #c0392b; }
+  .important .admonition-title { color: #922b21; }
+  .tip    { background: #e8f8f1; border-color: #27ae60; }
+  .tip    .admonition-title { color: #1a7a40; }
+
+  /* ── Code blocks ── */
+  code {
+    background: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace;
+    font-size: 0.875em;
+    color: #c0392b;
+  }
+  pre {
+    background: #272822;
+    color: #f8f8f2;
+    border: 1px solid #1a1a1a;
+    border-radius: 4px;
+    padding: 14px 18px;
+    overflow-x: auto;
+    font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace;
+    font-size: 0.855rem;
+    line-height: 1.55;
+    margin: 14px 0;
+  }
+  pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: inherit;
+    font-size: inherit;
+  }
+  /* syntax highlight tokens */
+  .kw  { color: #66d9e8; }
+  .cm  { color: #75715e; font-style: italic; }
+  .st  { color: #e6db74; }
+  .nm  { color: #a6e22e; }
+  .op  { color: #f92672; }
+  .va  { color: #fd971f; }
+
+  /* ── Tables ── */
+  table.docutils {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 18px 0;
+    font-size: 0.88rem;
+  }
+  table.docutils th {
+    background: #404040;
+    color: #fff;
+    padding: 8px 12px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.84rem;
+  }
+  table.docutils td {
+    padding: 7px 12px;
+    border-bottom: 1px solid #e0e0e0;
+    vertical-align: top;
+  }
+  table.docutils tr:nth-child(even) td { background: #f7f7f7; }
+  table.docutils tr:hover td { background: #eef5fb; }
+
+  /* ── Lists ── */
+  #content ul, #content ol {
+    padding-left: 22px;
+    margin-bottom: 14px;
+  }
+  #content li { margin-bottom: 4px; }
+
+  /* ── Definition lists ── */
+  dl.field-list { margin: 14px 0; }
+  dl.field-list dt {
+    font-weight: 700;
+    color: #333;
+    font-size: 0.88rem;
+    margin-top: 10px;
+  }
+  dl.field-list dd {
+    margin-left: 20px;
+    color: #555;
+    font-size: 0.875rem;
+  }
+
+  /* ── Section toc ── */
+  .contents {
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 14px 20px;
+    display: inline-block;
+    min-width: 260px;
+    max-width: 420px;
+    margin: 10px 0 24px;
+    font-size: 0.875rem;
+  }
+  .contents .topic-title {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #333;
+    margin-bottom: 8px;
+  }
+  .contents ul { margin-bottom: 0; }
+  .contents li { margin-bottom: 2px; }
+
+  /* ── Version badge ── */
+  .version-badge {
+    display: inline-block;
+    background: #2980b9;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 3px;
+    vertical-align: middle;
+    letter-spacing: 0.03em;
+    margin-left: 6px;
+  }
+
+  /* ── Footer ── */
+  #footer {
+    background: #343131;
+    color: #888;
+    text-align: center;
+    padding: 14px;
+    font-size: 0.78rem;
+    border-top: 2px solid #4a4a4a;
+  }
+  #footer a { color: #aaa; text-decoration: none; }
+  #footer a:hover { color: #fff; }
+
+  /* ── Page sections hidden by JS ── */
+  .doc-section { display: none; }
+  .doc-section.active { display: block; }
+
+  hr { border: none; border-top: 1px solid #e0e0e0; margin: 22px 0; }
+
+  /* rubric (inline heading) */
+  .rubric {
+    font-weight: 700;
+    color: #333;
+    margin: 18px 0 6px;
+    font-size: 0.95rem;
+  }
+
+  @media (max-width: 860px) {
+    #sidebar { display: none; }
+    #content { padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-wrap">
+
+  <!-- ════════════════ SIDEBAR ════════════════ -->
+  <nav id="sidebar">
+    <div class="sidebar-logo">
+      <span class="logo-name">LAMMPS-CustomFork</span>
+      <span class="logo-sub">documentation</span>
+    </div>
+    <div class="sidebar-meta">
+      Version: <span>1.0.0-dev</span><br>
+      Branch: <span>main</span>
+    </div>
+    <div class="sidebar-search">
+      <input type="text" placeholder="Search docs…" id="search-input" oninput="filterNav(this.value)">
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">User Guide</div>
+      <ul id="nav-tree">
+        <li class="active" data-page="intro">
+          <a href="#" onclick="showPage('intro');return false;">1. Introduction</a>
+          <ul>
+            <li><a href="#" onclick="showPage('intro');return false;">1.1. Overview</a></li>
+            <li><a href="#" onclick="showPage('intro');return false;">1.2. What this fork adds</a></li>
+            <li><a href="#" onclick="showPage('intro');return false;">1.3. License</a></li>
+          </ul>
+        </li>
+        <li data-page="install">
+          <a href="#" onclick="showPage('install');return false;">2. Install LAMMPS</a>
+          <ul>
+            <li><a href="#" onclick="showPage('install');return false;">2.1. Prerequisites</a></li>
+            <li><a href="#" onclick="showPage('install');return false;">2.2. Clone the repository</a></li>
+            <li><a href="#" onclick="showPage('install');return false;">2.3. Module setup (HPC)</a></li>
+          </ul>
+        </li>
+        <li data-page="build">
+          <a href="#" onclick="showPage('build');return false;">3. Build LAMMPS</a>
+          <ul>
+            <li><a href="#" onclick="showPage('build');return false;">3.1. Build with CMake</a></li>
+            <li><a href="#" onclick="showPage('build');return false;">3.2. Required packages</a></li>
+            <li><a href="#" onclick="showPage('build');return false;">3.3. Optional packages</a></li>
+            <li><a href="#" onclick="showPage('build');return false;">3.4. HPC cluster build</a></li>
+          </ul>
+        </li>
+        <li data-page="run">
+          <a href="#" onclick="showPage('run');return false;">4. Run LAMMPS</a>
+          <ul>
+            <li><a href="#" onclick="showPage('run');return false;">4.1. Basic usage</a></li>
+            <li><a href="#" onclick="showPage('run');return false;">4.2. Example input scripts</a></li>
+            <li><a href="#" onclick="showPage('run');return false;">4.3. Batch submission</a></li>
+          </ul>
+        </li>
+        <li data-page="packages">
+          <a href="#" onclick="showPage('packages');return false;">5. Custom packages</a>
+          <ul>
+            <li><a href="#" onclick="showPage('packages');return false;">5.1. PKG_BPM</a></li>
+            <li><a href="#" onclick="showPage('packages');return false;">5.2. PKG_MOLECULE</a></li>
+            <li><a href="#" onclick="showPage('packages');return false;">5.3. PKG_MISC</a></li>
+          </ul>
+        </li>
+        <li data-page="errors">
+          <a href="#" onclick="showPage('errors');return false;">6. Errors &amp; troubleshooting</a>
+        </li>
+      </ul>
+    </div>
+
+    <div class="nav-divider"></div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">Command Reference</div>
+      <ul>
+        <li><a href="#" onclick="showPage('commands');return false;">Fix styles</a></li>
+        <li><a href="#" onclick="showPage('commands');return false;">Compute styles</a></li>
+        <li><a href="#" onclick="showPage('commands');return false;">Pair styles</a></li>
+        <li><a href="#" onclick="showPage('commands');return false;">Bond styles</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-divider"></div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">Links</div>
+      <ul>
+        <li><a href="https://github.com" target="_blank">GitHub repository ↗</a></li>
+        <li><a href="https://docs.lammps.org" target="_blank">Upstream LAMMPS docs ↗</a></li>
+        <li><a href="https://www.lammps.org" target="_blank">LAMMPS website ↗</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- ════════════════ MAIN ════════════════ -->
+  <div id="main">
+    <div id="topbar">
+      <div class="breadcrumb" id="breadcrumb">
+        <a href="#" onclick="showPage('intro');return false;">LAMMPS-CustomFork</a>
+        <span>›</span>
+        <span id="breadcrumb-current">Introduction</span>
+      </div>
+      <div class="topbar-nav">
+        <a href="#" class="prev" id="nav-prev" onclick="navPrev();return false;">Previous</a>
+        <a href="#" class="next" id="nav-next" onclick="navNext();return false;">Next</a>
+      </div>
+    </div>
+
+    <div id="content">
+
+      <!-- ════ PAGE: INTRODUCTION ════ -->
+      <div class="doc-section active" id="page-intro">
+        <h1>LAMMPS-CustomFork documentation <span class="version-badge">v1.0.0-dev</span></h1>
+
+        <h2>About this fork<a class="headerlink" href="#about" title="Link">¶</a></h2>
+        <p>
+          This documentation covers <strong>LAMMPS-CustomFork</strong>, a modified version of the
+          <a href="https://www.lammps.org" target="_blank">LAMMPS molecular dynamics simulator</a>
+          developed for research use. It extends the upstream LAMMPS codebase with additional
+          custom fix and compute styles, modified package configurations, and a reproducible
+          CMake build workflow targeting HPC clusters.
+        </p>
+        <p>
+          LAMMPS stands for <strong>L</strong>arge-scale <strong>A</strong>tomic/<strong>M</strong>olecular
+          <strong>M</strong>assively <strong>P</strong>arallel <strong>S</strong>imulator.
+          The upstream code is developed at Sandia National Laboratories and distributed under the
+          <a href="https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html" target="_blank">GNU General Public License v2</a>.
+        </p>
+
+        <div class="admonition note">
+          <div class="admonition-title">Note</div>
+          This documentation covers the custom fork only. For full upstream LAMMPS documentation,
+          refer to <a href="https://docs.lammps.org" target="_blank">docs.lammps.org</a>.
+          Sections marked with <span class="version-badge">CUSTOM</span> describe additions or
+          modifications specific to this repository.
+        </div>
+
+        <hr>
+
+        <h2>What this fork adds<a class="headerlink" href="#what-added" title="Link">¶</a></h2>
+        <p>The following features are added or modified relative to the upstream LAMMPS stable branch:</p>
+        <ul>
+          <li>Custom fix and compute styles for polymer network simulations</li>
+          <li>Modified CMake configuration with pre-set package flags for the target system</li>
+          <li>Additional post-processing scripts and example input files</li>
+          <li>Reproducible module environment files for HPC cluster builds</li>
+        </ul>
+
+        <h2>How this documentation is organized<a class="headerlink" href="#organization" title="Link">¶</a></h2>
+        <p>The manual is split into three main sections:</p>
+        <ol>
+          <li>
+            The <strong>User Guide</strong> — how to obtain, configure, compile, and run
+            this fork of LAMMPS on your system or cluster.
+          </li>
+          <li>
+            The <strong>Custom Packages</strong> section — detailed descriptions of the
+            packages enabled in this build and any additions or changes to their behavior.
+          </li>
+          <li>
+            The <strong>Command Reference</strong> — reference pages for fix, compute, pair,
+            and bond styles, including any new styles added in this fork.
+          </li>
+        </ol>
+
+        <hr>
+
+        <h2>License<a class="headerlink" href="#license" title="Link">¶</a></h2>
+        <p>
+          This fork is distributed under the same terms as upstream LAMMPS:
+          the GNU General Public License Version 2 (GPLv2). Contributions added by this
+          project are Copyright © the respective authors. See the
+          <code>LICENSE</code> file in the repository root for the full license text.
+        </p>
+      </div>
+
+      <!-- ════ PAGE: INSTALL ════ -->
+      <div class="doc-section" id="page-install">
+        <h1>2. Install LAMMPS</h1>
+
+        <div class="contents">
+          <div class="topic-title">Contents</div>
+          <ul>
+            <li><a href="#prereqs">2.1. Prerequisites</a></li>
+            <li><a href="#clone">2.2. Clone the repository</a></li>
+            <li><a href="#modules">2.3. Module setup (HPC)</a></li>
+          </ul>
+        </div>
+
+        <p>
+          This page describes how to obtain the source code for this fork and set up the
+          environment before building. Unlike the upstream LAMMPS distribution, this repository
+          is not available through package managers or conda; it must be cloned directly from
+          the project Git repository and compiled from source.
+        </p>
+
+        <h2 id="prereqs">2.1. Prerequisites<a class="headerlink" href="#prereqs" title="Link">¶</a></h2>
+        <p>The following software must be available on your system before building:</p>
+
+        <table class="docutils">
+          <thead>
+            <tr><th>Requirement</th><th>Minimum version</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>C++ compiler (GCC or Intel)</td><td>GCC 9 / icpc 19</td><td>C++14 support required</td></tr>
+            <tr><td>CMake</td><td>3.16</td><td>Used exclusively; no Makefile build supported</td></tr>
+            <tr><td>MPI implementation</td><td>OpenMPI 3.x or MPICH 3.x</td><td>Required for all parallel runs</td></tr>
+            <tr><td>Python</td><td>3.8+</td><td>Required for post-processing scripts</td></tr>
+            <tr><td>FFTW3 (optional)</td><td>3.3.8</td><td>For Kspace solvers; can use KISS FFT fallback</td></tr>
+          </tbody>
+        </table>
+
+        <div class="admonition warning">
+          <div class="admonition-title">Warning</div>
+          The Intel <code>icpc</code> compiler requires additional CMake flags. See
+          <a href="#" onclick="showPage('build');return false;">Section 3 — Build LAMMPS</a>
+          for compiler-specific options.
+        </div>
+
+        <h2 id="clone">2.2. Clone the repository<a class="headerlink" href="#clone" title="Link">¶</a></h2>
+        <p>Clone the repository into your working directory using Git:</p>
+
+<pre><span class="cm"># Clone over HTTPS</span>
+git clone https://github.com/YOUR_ORG/lammps-customfork.git
+
+<span class="cm"># Or over SSH</span>
+git clone git@github.com:YOUR_ORG/lammps-customfork.git
+
+cd lammps-customfork</pre>
+
+        <p>
+          The repository follows a branching strategy aligned with upstream LAMMPS.
+          The <code>main</code> branch tracks the latest stable upstream release with
+          this fork's patches applied on top.
+        </p>
+
+        <div class="admonition tip">
+          <div class="admonition-title">Tip</div>
+          If you are working on a shared HPC cluster, clone into a directory on a
+          <strong>parallel filesystem</strong> (e.g., <code>/scratch</code> or your group's project
+          allocation) rather than your home directory. Build artifacts can be large.
+        </div>
+
+        <h2 id="modules">2.3. Module setup (HPC)<a class="headerlink" href="#modules" title="Link">¶</a></h2>
+        <p>
+          On HPC clusters using the <code>module</code> environment system, load the following
+          modules before configuring and building. The exact module names vary by cluster;
+          adjust to match your system's available modules.
+        </p>
+
+<pre><span class="cm"># Example for a typical HPC cluster (adjust module names as needed)</span>
+module purge
+module load gcc/11.2.0
+module load openmpi/4.1.1
+module load cmake/3.22.1
+module load fftw/3.3.10
+
+<span class="cm"># Verify the environment</span>
+which mpicc
+cmake --version</pre>
+
+        <p>
+          A reproducible environment file is provided at
+          <code>env/modules.sh</code> in the repository root. You can source it directly:
+        </p>
+<pre>source env/modules.sh</pre>
+      </div>
+
+      <!-- ════ PAGE: BUILD ════ -->
+      <div class="doc-section" id="page-build">
+        <h1>3. Build LAMMPS</h1>
+
+        <div class="contents">
+          <div class="topic-title">Contents</div>
+          <ul>
+            <li><a href="#cmake-build">3.1. Build with CMake</a></li>
+            <li><a href="#required-pkgs">3.2. Required packages</a></li>
+            <li><a href="#optional-pkgs">3.3. Optional packages</a></li>
+            <li><a href="#hpc-build">3.4. HPC cluster build</a></li>
+          </ul>
+        </div>
+
+        <p>
+          This fork uses CMake exclusively for its build system. A <code>make</code>-based
+          build is not supported. The procedure follows the standard
+          <a href="https://docs.lammps.org/Build_cmake.html" target="_blank">LAMMPS CMake build</a>
+          workflow with additional flags for the packages required by this fork.
+        </p>
+
+        <h2 id="cmake-build">3.1. Build with CMake<a class="headerlink" href="#cmake-build" title="Link">¶</a></h2>
+        <p>
+          Create a build directory outside the source tree, configure with CMake, then compile.
+          The <code>-DCMAKE_BUILD_TYPE=Release</code> flag enables full compiler optimizations.
+        </p>
+
+<pre><span class="cm"># From the repository root</span>
+mkdir build && cd build
+
+cmake ../cmake \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_CXX_COMPILER=mpicxx \
+  -DPKG_BPM=yes \
+  -DPKG_MOLECULE=yes \
+  -DPKG_MISC=yes \
+  -DPKG_KSPACE=yes \
+  -DFFT=FFTW3 \
+  -DFFTW3_LIBRARY=/path/to/fftw/lib/libfftw3.a \
+  -DFFTW3_INCLUDE_DIR=/path/to/fftw/include
+
+<span class="cm"># Build using all available cores</span>
+make -j$(nproc)</pre>
+
+        <p>
+          If the build succeeds, the executable will be located at
+          <code>build/lmp</code>. You can optionally install it to a system path:
+        </p>
+<pre>make install   <span class="cm"># installs to CMAKE_INSTALL_PREFIX (default: /usr/local)</span></pre>
+
+        <div class="admonition note">
+          <div class="admonition-title">Note</div>
+          All package flags (<code>-DPKG_*</code>) must be specified at the CMake configure
+          step. They cannot be changed incrementally by re-running CMake. If you need to
+          add or remove a package, reconfigure from a clean build directory.
+        </div>
+
+        <h2 id="required-pkgs">3.2. Required packages<a class="headerlink" href="#required-pkgs" title="Link">¶</a></h2>
+        <p>
+          The following packages are <strong>required</strong> for the simulation workflows
+          supported by this fork. They must be enabled at configure time.
+        </p>
+
+        <table class="docutils">
+          <thead>
+            <tr><th>Package flag</th><th>Description</th><th>Upstream docs</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>PKG_BPM</code></td>
+              <td>Bonded particle model — provides the bond styles used for polymer network fracture simulations</td>
+              <td><a href="https://docs.lammps.org/Packages_details.html#pkg-bpm" target="_blank">BPM docs ↗</a></td>
+            </tr>
+            <tr>
+              <td><code>PKG_MOLECULE</code></td>
+              <td>Extended molecular topology — required for multi-body bonded interactions</td>
+              <td><a href="https://docs.lammps.org/Packages_details.html#pkg-molecule" target="_blank">MOLECULE docs ↗</a></td>
+            </tr>
+            <tr>
+              <td><code>PKG_MISC</code></td>
+              <td>Miscellaneous fixes and computes — includes several styles used by the custom fix in this fork</td>
+              <td><a href="https://docs.lammps.org/Packages_details.html#pkg-misc" target="_blank">MISC docs ↗</a></td>
+            </tr>
+            <tr>
+              <td><code>PKG_KSPACE</code></td>
+              <td>Long-range Coulombic solvers — required for charged particle systems</td>
+              <td><a href="https://docs.lammps.org/Packages_details.html#pkg-kspace" target="_blank">KSPACE docs ↗</a></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2 id="optional-pkgs">3.3. Optional packages<a class="headerlink" href="#optional-pkgs" title="Link">¶</a></h2>
+        <p>
+          The following packages are optional but recommended for extended functionality.
+          They can be enabled by adding the corresponding flag to the CMake command.
+        </p>
+
+        <table class="docutils">
+          <thead>
+            <tr><th>Package flag</th><th>Description</th><th>When to enable</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>PKG_REPLICA</code></td>
+              <td>Replica exchange and nudged elastic band methods</td>
+              <td>Free energy calculations, transition state searches</td>
+            </tr>
+            <tr>
+              <td><code>PKG_EXTRA-DUMP</code></td>
+              <td>Additional dump styles (NetCDF, HDF5, VTK)</td>
+              <td>When large trajectory files or VTK visualization is needed</td>
+            </tr>
+            <tr>
+              <td><code>PKG_PYTHON</code></td>
+              <td>Python interface to LAMMPS — embed Python in input scripts</td>
+              <td>Custom on-the-fly analysis and adaptive simulations</td>
+            </tr>
+            <tr>
+              <td><code>PKG_OPENMP</code></td>
+              <td>Thread-parallel versions of common styles via OpenMP</td>
+              <td>Node-local parallelism; useful when MPI ranks ≥ cores</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2 id="hpc-build">3.4. HPC cluster build<a class="headerlink" href="#hpc-build" title="Link">¶</a></h2>
+        <p>
+          A ready-made build script is provided at <code>env/build_hpc.sh</code>
+          in the repository. It loads the required modules, creates a clean build directory,
+          configures with the standard flag set, and compiles. Review and edit the module
+          names at the top of the script before running.
+        </p>
+<pre>cat env/build_hpc.sh   <span class="cm"># review first</span>
+bash env/build_hpc.sh  <span class="cm"># then run</span></pre>
+
+        <div class="admonition important">
+          <div class="admonition-title">Important</div>
+          Do not submit the build as a batch job on clusters that prohibit compilation on
+          compute nodes. Run the build step in an interactive session or on a dedicated
+          build/login node.
+        </div>
+      </div>
+
+      <!-- ════ PAGE: RUN ════ -->
+      <div class="doc-section" id="page-run">
+        <h1>4. Run LAMMPS</h1>
+
+        <div class="contents">
+          <div class="topic-title">Contents</div>
+          <ul>
+            <li><a href="#run-basic">4.1. Basic usage</a></li>
+            <li><a href="#run-examples">4.2. Example input scripts</a></li>
+            <li><a href="#run-batch">4.3. Batch submission</a></li>
+          </ul>
+        </div>
+
+        <h2 id="run-basic">4.1. Basic usage<a class="headerlink" href="#run-basic" title="Link">¶</a></h2>
+        <p>
+          Once the executable <code>lmp</code> is built, run LAMMPS by passing an input
+          script with the <code>-in</code> flag:
+        </p>
+<pre><span class="cm"># Serial run</span>
+./lmp -in in.script
+
+<span class="cm"># Parallel run with MPI (4 processors)</span>
+mpirun -np 4 ./lmp -in in.script
+
+<span class="cm"># Redirect log output to a file</span>
+mpirun -np 4 ./lmp -in in.script -log run.log</pre>
+
+        <p>Command-line options relevant to this fork:</p>
+        <dl class="field-list">
+          <dt><code>-in &lt;file&gt;</code></dt>
+          <dd>Path to the LAMMPS input script.</dd>
+          <dt><code>-log &lt;file&gt;</code></dt>
+          <dd>Write log output to the specified file instead of <code>log.lammps</code>.</dd>
+          <dt><code>-screen none</code></dt>
+          <dd>Suppress all output to screen (useful in batch jobs).</dd>
+          <dt><code>-var &lt;name&gt; &lt;value&gt;</code></dt>
+          <dd>Pass a variable from the command line into the input script.</dd>
+        </dl>
+
+        <h2 id="run-examples">4.2. Example input scripts<a class="headerlink" href="#run-examples" title="Link">¶</a></h2>
+        <p>
+          Several example input scripts are provided in the <code>examples/</code> directory
+          of the repository. Each subdirectory contains a <code>README</code> file describing
+          the simulation system and expected output.
+        </p>
+
+        <table class="docutils">
+          <thead><tr><th>Directory</th><th>System</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td><code>examples/polymer_network/</code></td><td>2D PEG polymer network, uniaxial tension</td><td>Main test case for BPM package</td></tr>
+            <tr><td><code>examples/equilibration/</code></td><td>Network equilibration protocols</td><td>Five protocol variants included</td></tr>
+            <tr><td><code>examples/fracture/</code></td><td>Notched fracture specimen</td><td>Requires PKG_BPM and PKG_MISC</td></tr>
+          </tbody>
+        </table>
+
+        <h2 id="run-batch">4.3. Batch submission (Slurm)<a class="headerlink" href="#run-batch" title="Link">¶</a></h2>
+        <p>
+          A template Slurm batch script is provided at <code>env/submit.sh</code>.
+          A minimal example is shown below:
+        </p>
+<pre>#!/bin/bash
+<span class="op">#SBATCH</span> --job-name=lammps-run
+<span class="op">#SBATCH</span> --nodes=1
+<span class="op">#SBATCH</span> --ntasks-per-node=16
+<span class="op">#SBATCH</span> --time=04:00:00
+<span class="op">#SBATCH</span> --output=slurm-%j.out
+
+source env/modules.sh
+
+mpirun -np <span class="va">$SLURM_NTASKS</span> ./build/lmp \
+  -in examples/polymer_network/in.network \
+  -log run.log \
+  -screen none</pre>
+      </div>
+
+      <!-- ════ PAGE: PACKAGES ════ -->
+      <div class="doc-section" id="page-packages">
+        <h1>5. Custom packages</h1>
+
+        <p>
+          This section describes the packages enabled in this fork, with notes on any
+          behavior that differs from the upstream LAMMPS documentation.
+          Packages listed here with no modification notes behave identically to their
+          upstream counterparts.
+        </p>
+
+        <h2>5.1. PKG_BPM — Bonded Particle Model<a class="headerlink" href="#bpm" title="Link">¶</a></h2>
+        <p>
+          The BPM package provides bond styles and fixes designed for
+          bonded particle model simulations, including breakable bonds
+          suited to fracture mechanics studies. This fork uses BPM
+          as the primary bonding framework for polymer network simulations.
+        </p>
+
+        <div class="admonition note">
+          <div class="admonition-title">Note</div>
+          No modifications have been made to the upstream BPM package source in this fork.
+          Refer to the <a href="https://docs.lammps.org/Packages_details.html#pkg-bpm" target="_blank">upstream BPM documentation</a>
+          for the full command reference.
+        </div>
+
+        <h4>Relevant bond styles</h4>
+        <ul>
+          <li><code>bond_style bpm/spring</code> — harmonic spring bond with a stretch-based failure criterion</li>
+          <li><code>bond_style bpm/rotational</code> — spring bond with rotational stiffness</li>
+        </ul>
+
+        <h4>Minimal input script example</h4>
+<pre>bond_style      bpm/spring
+bond_coeff      1  <span class="nm">1000.0</span>  <span class="nm">1.5</span>  <span class="nm">0.0</span>  <span class="nm">1</span>
+fix             1 all nve/bpm/sphere
+fix             2 all wall/gran/region …</pre>
+
+        <h2>5.2. PKG_MOLECULE<a class="headerlink" href="#molecule" title="Link">¶</a></h2>
+        <p>
+          The MOLECULE package adds pair, bond, angle, dihedral, and improper styles
+          for modeling molecular systems. It is required for any simulation using
+          explicit topology (bonds, angles, dihedrals) defined in the data file.
+        </p>
+
+        <h2>5.3. PKG_MISC<a class="headerlink" href="#misc" title="Link">¶</a></h2>
+        <p>
+          The MISC package includes several miscellaneous fix and compute styles that do
+          not fit into other packages. In this fork, several computes from MISC are used
+          in post-processing to extract per-bond stretch distributions.
+        </p>
+
+        <div class="admonition tip">
+          <div class="admonition-title">Tip</div>
+          To list all fix and compute styles available in your compiled binary, run:
+          <code>./lmp -h</code>. Look for styles labeled <code>[BPM]</code>,
+          <code>[MOLECULE]</code>, or <code>[MISC]</code> in the output.
+        </div>
+      </div>
+
+      <!-- ════ PAGE: ERRORS ════ -->
+      <div class="doc-section" id="page-errors">
+        <h1>6. Errors &amp; troubleshooting</h1>
+
+        <p>
+          This page covers the most common errors encountered when building or running this fork,
+          along with their solutions. For errors not listed here, consult the
+          <a href="https://docs.lammps.org/Errors.html" target="_blank">upstream LAMMPS errors page</a>
+          and the repository issue tracker.
+        </p>
+
+        <h2>Build errors<a class="headerlink" href="#build-errors" title="Link">¶</a></h2>
+
+        <h4>CMake cannot find FFTW3</h4>
+        <p>
+          If CMake reports <em>"Could not find FFTW3"</em>, verify that the
+          <code>FFTW3_LIBRARY</code> and <code>FFTW3_INCLUDE_DIR</code> paths are
+          set correctly on the CMake command line. On HPC clusters, the FFTW module
+          must be loaded <strong>before</strong> running CMake.
+        </p>
+<pre><span class="cm"># Check that the library file exists at the path you specified</span>
+ls /path/to/fftw/lib/libfftw3.a</pre>
+
+        <h4>Undefined symbols for PKG_BPM</h4>
+        <p>
+          If the linker reports undefined symbols related to BPM classes, confirm
+          that <code>-DPKG_BPM=yes</code> was included in your CMake configure
+          command. Run <code>cmake -L build/ | grep BPM</code> to verify the flag is set.
+        </p>
+
+        <h2>Runtime errors<a class="headerlink" href="#runtime-errors" title="Link">¶</a></h2>
+
+        <h4>Illegal bond in BPM simulation</h4>
+        <p>
+          The message <em>"Bond atom missing in fix nve/bpm/sphere"</em> typically
+          indicates that atom communication cutoffs are too small. Increase
+          <code>comm_modify cutoff</code> in your input script:
+        </p>
+<pre>comm_modify mode single cutoff 3.0</pre>
+
+        <div class="admonition warning">
+          <div class="admonition-title">Warning</div>
+          Setting the communication cutoff too high significantly increases inter-process
+          communication overhead. Use the smallest value that eliminates the error.
+        </div>
+
+        <h4>Fix nve/bpm/sphere requires atom style sphere</h4>
+        <p>
+          This fix requires that particles have radius and angular velocity degrees of
+          freedom. Ensure your input script includes:
+        </p>
+<pre>atom_style sphere</pre>
+      </div>
+
+      <!-- ════ PAGE: COMMANDS ════ -->
+      <div class="doc-section" id="page-commands">
+        <h1>Command reference</h1>
+        <p>
+          This section provides an index of fix, compute, pair, and bond styles available
+          in this build. Styles added or modified relative to upstream LAMMPS are marked
+          <span class="version-badge">CUSTOM</span>.
+        </p>
+        <p>
+          For the full upstream command reference, see
+          <a href="https://docs.lammps.org/commands_list.html" target="_blank">docs.lammps.org/commands_list.html</a>.
+        </p>
+
+        <h2>Fix styles</h2>
+        <table class="docutils">
+          <thead><tr><th>Fix style</th><th>Package</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>fix nve/bpm/sphere</code></td><td>BPM</td><td>NVE integrator for spherical BPM particles</td></tr>
+            <tr><td><code>fix wall/gran/region</code></td><td>GRANULAR</td><td>Granular wall interactions</td></tr>
+            <tr><td><code>fix deform</code></td><td>CORE</td><td>Deform simulation box; used for uniaxial loading</td></tr>
+            <tr><td><code>fix langevin</code></td><td>CORE</td><td>Langevin thermostat</td></tr>
+          </tbody>
+        </table>
+
+        <h2>Compute styles</h2>
+        <table class="docutils">
+          <thead><tr><th>Compute style</th><th>Package</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>compute stress/atom</code></td><td>CORE</td><td>Per-atom virial stress tensor</td></tr>
+            <tr><td><code>compute bond/local</code></td><td>CORE</td><td>Per-bond local quantities (length, energy, stretch)</td></tr>
+            <tr><td><code>compute property/atom</code></td><td>CORE</td><td>Per-atom properties</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div><!-- /#content -->
+
+    <div id="footer">
+      LAMMPS-CustomFork documentation &mdash;
+      built with a custom Sphinx-inspired theme. &nbsp;|&nbsp;
+      <a href="https://docs.lammps.org" target="_blank">Upstream LAMMPS docs</a>
+    </div>
+  </div><!-- /#main -->
+</div><!-- /.page-wrap -->
+
+<script>
+  const pages = ['intro','install','build','run','packages','errors','commands'];
+  const titles = {
+    intro: 'Introduction',
+    install: 'Install LAMMPS',
+    build: 'Build LAMMPS',
+    run: 'Run LAMMPS',
+    packages: 'Custom packages',
+    errors: 'Errors & troubleshooting',
+    commands: 'Command reference'
+  };
+
+  let current = 'intro';
+
+  function showPage(id) {
+    document.querySelectorAll('.doc-section').forEach(el => el.classList.remove('active'));
+    const page = document.getElementById('page-' + id);
+    if (page) {
+      page.classList.add('active');
+      current = id;
+    }
+    document.querySelectorAll('#nav-tree li').forEach(li => {
+      li.classList.toggle('active', li.dataset.page === id);
+    });
+    document.getElementById('breadcrumb-current').textContent = titles[id] || id;
+    window.scrollTo(0, 0);
+    updateNavArrows();
+  }
+
+  function updateNavArrows() {
+    const idx = pages.indexOf(current);
+    const prev = document.getElementById('nav-prev');
+    const next = document.getElementById('nav-next');
+    prev.style.visibility = idx > 0 ? 'visible' : 'hidden';
+    next.style.visibility = idx < pages.length - 1 ? 'visible' : 'hidden';
+    if (idx > 0) prev.title = titles[pages[idx-1]];
+    if (idx < pages.length - 1) next.title = titles[pages[idx+1]];
+  }
+
+  function navPrev() {
+    const idx = pages.indexOf(current);
+    if (idx > 0) showPage(pages[idx - 1]);
+  }
+
+  function navNext() {
+    const idx = pages.indexOf(current);
+    if (idx < pages.length - 1) showPage(pages[idx + 1]);
+  }
+
+  function filterNav(q) {
+    q = q.toLowerCase();
+    document.querySelectorAll('#nav-tree li').forEach(li => {
+      const text = li.textContent.toLowerCase();
+      li.style.display = (!q || text.includes(q)) ? '' : 'none';
+    });
+  }
+
+  updateNavArrows();
+</script>
+</body>
+</html>
